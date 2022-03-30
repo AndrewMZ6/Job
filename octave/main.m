@@ -125,7 +125,7 @@ Q_baseband = sig_time_comp.*(-sin(2*pi*fc*timeline));
 compl2 = complex(I_baseband, Q_baseband);
 
 
-figure; plot(freqline, abs(fft(Q_baseband)));
+figure; plot(freqline, abs(fft(compl2)));
 xlabel('frequency, Hz');
 
 scatterplot(fft(compl2));
