@@ -6,7 +6,7 @@ pkg load communications;
 
 %% Пред расчёты
 
-% Индекс модуляции
+% �?ндекс модуляции
 M = 4;
 
 % Число информационных бит
@@ -36,11 +36,11 @@ freqline = 0:fs/N_interpolated:fs - fs/N_interpolated;
 bits = randi([0, 3], 1, N);
 
 % QPSK модуляция 
-mod = qammod(bits, M);
+modulated = qammod(bits, M);
 
 % Расстановка поднесущих и защитных интервалов
 spectrum = zeros(1, 1024);
-spectrum(101:924) = mod(1:824);
+spectrum(101:924) = modulated(1:824);
 
 % График спектра OFDM символа
 figure;
@@ -50,31 +50,35 @@ plot(abs(spectrum));
 scatterplot(spectrum);
 
 % Сдвиг спектра
-spec_shifted = fftshift(spectrum);
+spectrum_shifted = fftshift(spectrum);
 
-figure; plot(abs(spec_shifted));
-
+figure; 
+plot(abs(spectrum_shifted));
 
 % Спектр интерполированный
-spec_interp = [spec_shifted(1:512), zeros(1, N_interpolated - 1024), spec_shifted(513:1024)];
+shifted_zeropadded = [spectrum_shifted(1:512), zeros(1, N_interpolated - 1024), spectrum_shifted(513:1024)];
 
-figure; plot(abs(spec_interp));
+figure; 
+plot(abs(shifted_zeropadded));
 
 % перевод интерполированного сигнала во временную область
-sig_shifted_time = ifft(spec_interp);
+tx_signal_time = ifft(shifted_zeropadded);
 
 % Выделение синфазной и квадратурной составляющей
-I = real(sig_shifted_time);
-Q = imag(sig_shifted_time);
+I = real(tx_signal_time);
+Q = imag(tx_signal_time);
 
 % посадка на несущую синфазной и квадратурной составляющей и суммирование
-summary = I.*cos(2*pi*fc*timeline) - Q.*sin(2*pi*fc*timeline);
+tx_signal_carr = I.*cos(2*pi*fc*timeline) - Q.*sin(2*pi*fc*timeline);
 
-figure; plot(freqline, abs(fft(summary)));
+figure; 
+plot(freqline, abs(fft(tx_signal_carr)));
 xlabel('frequency, Hz');
-scatter(real(fft(summary)), imag(fft(summary)), 'filled');
 
-%% Иммитация аналогового многолучевого канала распространения
+figure;
+scatter(real(fft(tx_signal_carr)), imag(fft(tx_signal_carr)), 'filled');
+
+%% �?ммитация аналогового многолучевого канала распространения
 
 % Коэффициенты ослабления лучей
 k1 = 0.9;
@@ -82,84 +86,87 @@ k2 = 0.6;
 k3 = 0.4;
 
 % Формирование трёх лучей
-sig1 = [summary, zeros(1, 4)]*k1;
-sig2 = [zeros(1, 2), summary, zeros(1, 2)]*k2;
-sig3 = [zeros(1, 4), summary]*k3;
+sig1 = [tx_signal_carr, zeros(1, 4)]*k1;
+sig2 = [zeros(1, 2), tx_signal_carr, zeros(1, 2)]*k2;
+sig3 = [zeros(1, 4), tx_signal_carr]*k3;
 
 % Суммирование лучей
-sig_time_channel = sig1 + sig2 + sig3;
+signal_multipathed = sig1 + sig2 + sig3;
 
 % Добавление шума 
-##sig_time_channel = awgn(sig_time_channel, 15, 'measured');
+##signal_multipathed = awgn(signal_multipathed, 15, 'measured');
 
 % Спектр OFDM символа после многолучевого канала
 figure;
-plot(freqline, abs(fft(sig_time_channel(1:10240))));
+plot(freqline, abs(fft(signal_multipathed(1:10240))));
 xlabel('frequency, Hz');
 
 % Созвездие OFDM символа после многолучевого канала
-scatterplot(fft(sig_time_channel(1:10240)));
+scatterplot(fft(signal_multipathed(1:10240)));
 
 % Формирование компенсируещего аналогового сигнала
-comp = [summary, zeros(1, 4)]*k1;
+analog_comp = [tx_signal_carr, zeros(1, 4)]*k1;
 
 % Компенсация первого луча в аналоговом тракте
-sig_time_comp = sig_time_channel - comp;
-sig_time_comp = sig_time_comp(3:10242);
+two_rays_signal = signal_multipathed - analog_comp;
+two_rays_signal = two_rays_signal(3:10242);
 
 % Спектр OFDM символа после аналоговой компенсации
-spec_comp = fft(sig_time_comp);
+two_rays_spectrum = fft(two_rays_signal);
+
 figure;
-plot(freqline, abs(spec_comp));
+plot(freqline, abs(two_rays_spectrum));
 xlabel('frequency, Hz');
 
 % Созвездие OFDM символа после аналоговой компенсации
-scatterplot(spec_comp); xlim([-0.4, 0.4]);
+scatterplot(two_rays_spectrum); xlim([-0.4, 0.4]);
 
 %% В цифровой части
 
 % Преобразование частоты (перенос на нулевую частоту)
-I_baseband = sig_time_comp.*cos(2*pi*fc*timeline);
-Q_baseband = sig_time_comp.*(-sin(2*pi*fc*timeline));
+I_baseband = two_rays_signal.*cos(2*pi*fc*timeline);
+Q_baseband = two_rays_signal.*(-sin(2*pi*fc*timeline));
 
 % Воссоздание комплексного сигнала из синфазной и квадратурной составляющих
-compl2 = complex(I_baseband, Q_baseband);
+rx_complex_carr = complex(I_baseband, Q_baseband);
 
-
-figure; plot(freqline, abs(fft(compl2)));
-xlabel('frequency, Hz');
-
-scatterplot(fft(compl2));
-
-% Децимация (избавляемся от высокочастотной составляющей и зеро-паддинга)
-compl2_spec = fft(compl2);
-compl2_spec2 = [compl2_spec(1:512), compl2_spec(end-511:end)];
-
-% Сдвиг спектра обратно
-compl2_spec2_shifted = fftshift(compl2_spec2);
-
-scatterplot(compl2_spec2_shifted);
-figure; plot(abs(compl2_spec2_shifted));
-
-% Оценка передаточной функции канала
-ocen = compl2_spec2_shifted(101:924)./spectrum(101:924);
-
-figure; plot(abs(ocen));
-
-scatterplot(ocen)
-
-%% Использование оценки для погашения другого OFDM символа
-
-aa = spectrum(101:924).*ocen;
-aa = [zeros(1, 100), aa, zeros(1, 100)];
-aa_t = ifft(aa);
-
-figure; plot(abs(aa));
-
-cc = -aa_t + ifft(compl2_spec2_shifted);
 
 figure; 
-plot(20*log10(abs(cc))); hold on; 
-plot(20*log10(abs(aa_t))); hold off;
+plot(freqline, abs(fft(rx_complex_carr)));
+xlabel('frequency, Hz');
+
+scatterplot(fft(rx_complex_carr));
+
+% Децимация (избавляемся от высокочастотной составляющей и зеро-паддинга)
+rx_carr_spectrum = fft(rx_complex_carr);
+spectrum_deci = [rx_carr_spectrum(1:512), rx_carr_spectrum(end-511:end)];
+
+% Сдвиг спектра обратно
+rx_spectrum_shifted = fftshift(spectrum_deci);
+
+scatterplot(rx_spectrum_shifted);
+figure; plot(abs(rx_spectrum_shifted));
+
+% Оценка передаточной функции канала
+estimation = rx_spectrum_shifted(101:924)./spectrum(101:924);
+
+figure; plot(abs(estimation));
+
+scatterplot(estimation)
+
+%% �?спользование оценки для погашения другого OFDM символа
+
+predistorted_spectrum = spectrum(101:924).*estimation;
+predistorted_spectrum = [zeros(1, 100), predistorted_spectrum, zeros(1, 100)];
+predistorted_time = ifft(predistorted_spectrum);
+
+figure; 
+plot(abs(predistorted_spectrum));
+
+compensated = -predistorted_time + ifft(rx_spectrum_shifted);
+
+figure; 
+plot(20*log10(abs(compensated))); hold on; 
+plot(20*log10(abs(predistorted_time))); hold off;
 legend('after compensation', 'before compensation');
 grid on;
