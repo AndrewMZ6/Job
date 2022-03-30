@@ -89,7 +89,7 @@ sig3 = [zeros(1, 4), summary]*k3;
 sig_time_channel = sig1 + sig2 + sig3;
 
 % Добавление шума 
-sig_time_channel = awgn(sig_time_channel, 15, 'measured');
+##sig_time_channel = awgn(sig_time_channel, 15, 'measured');
 
 % Спектр OFDM символа после многолучевого канала
 figure;
@@ -125,7 +125,7 @@ Q_baseband = sig_time_comp.*(-sin(2*pi*fc*timeline));
 compl2 = complex(I_baseband, Q_baseband);
 
 
-figure; plot(freqline, abs(fft(compl2)));
+figure; plot(freqline, abs(fft(Q_baseband)));
 xlabel('frequency, Hz');
 
 scatterplot(fft(compl2));
@@ -162,86 +162,3 @@ plot(20*log10(abs(cc))); hold on;
 plot(20*log10(abs(aa_t))); hold off;
 legend('after compensation', 'before compensation');
 grid on;
-
-
-lev = 20*log10((rms(ifft(compl2_spec2_shifted)))/(rms(cc)));
-RMS_compl = 20*log10(rms(ifft(compl2_spec2_shifted)));
-RMS_cc = 20*log10(rms(cc));
-
-disp([lev, RMS_compl, RMS_cc]);
-
-return
-%% Проверка оценки вторым сигналом
-
-bits = randi([0, 3], 1, N);
-
-% QPSK модуляция 
-mod = qammod(bits, M);
-
-% Расстановка поднесущих и защитных интервалов
-spectrum = zeros(1, 1024);
-spectrum(101:924) = mod(1:824);
-
-% Компенсирующий сигнал
-aa = spectrum(101:924).*ocen;
-aa = [zeros(1, 100), aa, zeros(1, 100)];
-aa_t = ifft(aa);
-
-% Сдвиг спектра
-spec_shifted = fftshift(spectrum);
-
-% Спектр интерполированный
-spec_interp = [spec_shifted(1:512), zeros(1, N_interpolated - 1024), spec_shifted(513:1024)];
-
-% перевод интерполированного сигнала во временную область
-sig_shifted_time = ifft(spec_interp);
-
-% Выделение синфазной и квадратурной составляющей
-I = real(sig_shifted_time);
-Q = imag(sig_shifted_time);
-
-% посадка на несущую синфазной и квадратурной составляющей и суммирование
-summary = I.*cos(2*pi*fc*timeline) - Q.*sin(2*pi*fc*timeline);
-
-% Коэффициенты ослабления лучей
-k1 = 0.9;
-k2 = 0.6;
-k3 = 0.4;
-
-% Формирование трёх лучей
-sig1 = [summary, zeros(1, 4)]*k1;
-sig2 = [zeros(1, 2), summary, zeros(1, 2)]*k2;
-sig3 = [zeros(1, 4), summary]*k3;
-
-% Суммирование лучей
-sig_time_channel = sig1 + sig2 + sig3;
-
-% Добавление шума 
-% sig_time_channel = awgn(sig_time_channel, 15, 'measured');
-
-% Формирование компенсируещего аналогового сигнала
-comp = [summary, zeros(1, 4)]*k1;
-
-% Компенсация первого луча в аналоговом тракте
-sig_time_comp = sig_time_channel - comp;
-sig_time_comp = sig_time_comp(3:10242);
-
-% Преобразование частоты (перенос на нулевую частоту)
-I_baseband = sig_time_comp.*cos(2*pi*fc*timeline);
-Q_baseband = sig_time_comp.*(-sin(2*pi*fc*timeline));
-
-% Воссоздание комплексного сигнала из синфазной и квадратурной составляющих
-compl2 = complex(I_baseband, Q_baseband);
-
-% Децимация (избавляемся от высокочастотной составляющей и зеро-паддинга)
-compl2_spec = fft(compl2);
-compl2_spec2 = [compl2_spec(1:512), compl2_spec(end-511:end)];
-
-% Сдвиг спектра обратно
-compl2_spec2_shifted = fftshift(compl2_spec2);
-
-mysig = ifft(compl2_spec2_shifted);
-compensa = mysig - aa_t;
-
-figure; plot(20*log10(abs(compensa))); hold on;
-plot(20*log10(abs(mysig)));
