@@ -1,7 +1,7 @@
 function sendToWg(connectionID, data, fs, ArbFileName)
 %SENDTOWG отправить данные на генератор Waveform Generator 33500B
 %
-%   sendToWg() отправляет данные 
+%   sendToWg() отправляет данные
 
 if (nargin< 4) ArbFileName = 'Untitled'; end
 if (nargin< 3) fs = 50e6; end
@@ -9,7 +9,7 @@ if (nargin< 2)
     error('Нужно передать как минимум два аргумента');
 end
 
-switch contains(connectionID, '::')
+switch parseID(connectionID)
     case 1
         % Waveform Generator 33500B USB visa 
         % Этот блок игнорируется если соединение происходит через LAN см. блок "Waveform Generator 33500B LAN"
@@ -191,4 +191,15 @@ end
 
 % Закрыть соединение с инструментом
 fclose(WG_obj);
+
+function flag = parseID(id)
+    flag = false;
+    len = length(id);
+    for i = 1:len
+        if id(i) == ':'
+            flag = true;
+        end
+    end
+
+
 return;
