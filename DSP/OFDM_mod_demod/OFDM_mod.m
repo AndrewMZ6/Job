@@ -26,14 +26,20 @@ function [ofdmTime, params] = OFDM_mod(guardSize, fftSize)
             % this.ofdmTime = ifft(spec);
             %
             % -------------------------------------------------------------
-            infoScNum = fftSize - 2*guardSize - 1;
-            informationalIndexes1 = 1:floor(infoScNum/2);
-            informationalIndexes2 = ceil(infoScNum/2):infoScNum;
+            infoScNum = fftSize - 2*guardSize;
+            infoHalf = infoScNum/2;
+            L1 = guardSize + 1;
+            L2 = guardSize + infoHalf;
             bits = randi([0, 1], 1, infoScNum*2);
-            mod = (qammod(bits', 4, 'InputType', 'bit'))';
-            spec = [zeros(1, guardSize), mod(informationalIndexes1), 0, ...
-                mod(informationalIndexes2), zeros(1, guardSize)];
-            ofdmTime = ifft(spec);
+            moded = (qammod(bits', 4, 'InputType', 'bit'))';
+            spectrum = zeros(1, fftSize);
+            spectrum(L1:L2) = moded(1:infoHalf);
+            R1 = L2 + 2;
+            R2 = R1 -1 + infoHalf;
+            spectrum(R1:R2) = moded(infoHalf + 1:infoScNum);
+            spectrum_shifted = fftshift(spectrum);
+            ofdmTime = ifft(spectrum_shifted);
+            
             params.guardSize = guardSize;
             params.fftSize = fftSize;
             params.bits = bits;

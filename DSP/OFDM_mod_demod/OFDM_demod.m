@@ -20,9 +20,15 @@
             % На выход подается демодулированная битовая последовательность
             % demodedBits
             % -------------------------------------------------------------
-            ofdmSpec = fft(outerSig);
-            % guardSiz
-            noGuardsAndZeros = [ofdmSpec(params.guardSize + 1:(params.fftSize/2 - 1)), ofdmSpec((params.fftSize/2 + 1):params.fftSize - params.guardSize)];
+            ofdmSpecShifted = fft(outerSig);
+            ofdmSpec = fftshift(ofdmSpecShifted);
+            infoScNum = params.fftSize - 2*params.guardSize;
+            infoHalf = infoScNum/2;
+            L1 = params.guardSize + 1;
+            L2 = params.guardSize + infoHalf;
+            R1 = L2 + 2;
+            R2 = R1 -1 + infoHalf;
+            noGuardsAndZeros = [ofdmSpec(L1:L2), ofdmSpec(R1:R2)];
             demodedBits = (qamdemod(noGuardsAndZeros', 4, 'OutputType', 'bit'))';
             [~, err] = biterr(params.bits, demodedBits);
         end
