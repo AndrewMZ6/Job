@@ -21,16 +21,18 @@ for N2ID = 0:2
 end
 
 % SSS generation
-N1ID = 95;
+##N1ID = 95;
 
+% 2 M-sequences for generating SSS
 x0(1:7) = [1, 1, 0, 1, 1, 1, 0];
 x1(1:7) = [1, 0, 1, 1, 0, 0, 0];
 
-for i = 1:127 - 7
-  x0(i + 7) = mod((x0(i + 4) + x(i)), 2);
-  x1(i + 7) = mod((x0(i + 4) + x(i)), 2);
+for i = 1:231
+  x0(i + 7) = mod((x0(i + 4) + x0(i)), 2);
+  x1(i + 7) = mod((x0(i + 4) + x1(i)), 2);
 end
 
+% generating SSS
 for N1ID = 0:335
   m0 = 15*fix(N1ID/112) + 5*N2ID;
   m1 = mod(N1ID, 112);
@@ -42,3 +44,14 @@ for N1ID = 0:335
   
   dsss = dsss1.*dsss2;
 end
+
+ssblock = zeros([240 4]); 
+ssblock(56:182,1) = 1*dpss(N2ID+1,:);
+ssblock(56:182,3) = 2*dsss(N1ID+1,:);
+%% 4 ѕостроение сигналов в частотной области
+figure
+imagesc(abs(ssblock)) 
+caxis([0 4]);
+axis xy;
+xlabel('OFDM symbol');
+ylabel('Subcarrier')
