@@ -9,6 +9,10 @@ if (nargin< 3)
     error('Нужно передать как минимум два аргумента');
 end
 
+if strcmpi(connectionID, 'default')
+    connectionID = 'USB0::0x0957::0x4B07::MY53401534::0::INSTR';
+end
+
 switch parseID(connectionID)
     case 1
         % Waveform Generator 33500B USB visa 
