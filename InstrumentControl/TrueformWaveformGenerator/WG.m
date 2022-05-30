@@ -49,7 +49,7 @@ classdef WG
         function load_data(connectionID, data, chNum, fs, ArbFileName)
             %SENDTOWG отправить данные на генератор Waveform Generator 33500B
             %
-            %   sendToWg() отправляет данные
+            %   WG.load_data(connectionID, data, chNum, fs, ArbFileName)
             
             if (nargin< 5) ArbFileName = 'Untitled'; end
             if (nargin< 4) fs = 50e6; end

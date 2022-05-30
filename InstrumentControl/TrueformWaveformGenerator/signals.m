@@ -1,22 +1,40 @@
 classdef signals
-    % methods:
-    %   signals.two_sins(n, fs, f1, f2)
-    %   create two sinusoids and sum it
+    % методы:
+    %   two_sins(n, fs, f1, f2)
+    %   создаёт сумму двух синусоид с частотами f1 и f2 _|_|_
+    %
+    %   create qam4 ofdm baseband signal  -|__|-
+    %   signals.ofdm(guardSize, fftSize)
+    %
+    %   demodulate ofdm signal using params
+    %   signals.ofdm_demod(outerSig, params)
+
     
     properties
         
     end
     
     methods (Static)
-        function sig_sum = two_sins(n, fs, f1, f2)
+        function [sig_sum, timeline, freqline] = two_sins(n, fs, f1, f2)
+            %   [sig_sum, timeline, freqline] = signals.two_sins(n, fs, f1, f2)
+            %   fs - частота дискретизации
+            %   n - количество точек сигнала
+            %   вторым и третьим параметром возвращает два массива - timeline и freqline
+            %   timeline - массив отсчётов времени, использованный для построения синусоид
+            %   freqline - массив отсчётов частот, использованный для построения спектра
+
+
             % временная ось для создания синусоиды
             timeline = 0:1/fs:(n - 1)/fs;
+
+            % частотная ось для отображаения спектра
+            freqline = 0:fs/n:fs - fs/n;
             
             % генерация синусоид
             sig1 = sin(2*pi*f1*timeline);
             sig2 = sin(2*pi*f2*timeline);
             
-            % 1 сигнал, который будет отправлен на ЦАП 
+            % смесь
             sig_sum = real(sig1) + real(sig2);
         end
         function [ofdmTime, params] = ofdm(guardSize, fftSize)
