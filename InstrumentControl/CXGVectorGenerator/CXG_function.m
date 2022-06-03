@@ -94,18 +94,16 @@ ArbFileName = ArbFileName;
 wave = [real(data);imag(data)]; % get the real and imaginary parts
 wave = wave(:)';    % transpose and interleave the waveform
 
-maxval = max(abs([real(data), imag(data)]));
-
 tmp = 1; % default normalization factor = 1
-% tmp = max(abs([max(wave), min(wave)]));
-% % ARB binary range is 2's Compliment -32768 to + 32767
-% % So scale the waveform to +/- 32767 not 32768
+tmp = max(abs([max(wave), min(wave)]));
+% ARB binary range is 2's Compliment -32768 to + 32767
+% So scale the waveform to +/- 32767 not 32768
+
 modval = 2^16;
 scale = 2^15-1;
 scale = scale/tmp;
 wave = round(wave * scale);
 
-wave = wave*0.11;
 %  Get it from double to unsigned int and let the driver take care of Big
 %  Endian to Little Endian for you  Look at ESG in Workspace.  It is
 %  property of the VISA driver (at least Agilent's
