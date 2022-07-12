@@ -1,6 +1,6 @@
-function [exadata] = getFromExa(connectionID, samp_rate, acq_time, cent_freq)
+function [exadata1] = getFromExa(connectionID, samp_rate, acq_time, cent_freq)
 
-% function [exadata] = getFromExa(connectionID, samp_rate, acq_time, cent_freq)
+% function [exadata1] = getFromExa(connectionID, samp_rate, acq_time, cent_freq)
 %
 % Обязательные параметры:
 % connectionID - идентификатор соединения с инстументом
@@ -9,7 +9,7 @@ function [exadata] = getFromExa(connectionID, samp_rate, acq_time, cent_freq)
 % samp_rate - частота дискретизации. По умолчанию 20 MHz
 % acq_time - время измерения. По умолчанию 2000 мкс = 2 мс
 % cent_freq - центральная частота (частота несущей). По умолчанию 500 MHz
-% exadata - полученные от анализатора данные типа 'double'
+% exadata1 - полученные от анализатора данные типа 'complex'
 
 if (nargin < 4) cent_freq = 500e6; end
 if (nargin < 3) acq_time = 2000e-6; end
