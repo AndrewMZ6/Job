@@ -104,4 +104,16 @@ data = fscanf(exa);
 % data массив чисел <double>
 exadata = str2num(data);
 
+I_exa = exadata(1:2:end);
+Q_exa = exadata(2:2:end);
+% disp(length(I_exa));
+% disp(length(Q_exa));
+[~, s_I] = size(I_exa);
+[~, s_Q] = size(Q_exa);
+if s_I ~= s_Q
+    exadata1 = complex(I_exa(1:end - 1), Q_exa);
+else
+    exadata1 = complex(I_exa, Q_exa);
+end
+
 fclose(exa);
