@@ -1,15 +1,17 @@
-function sendToCxg(connectionID, data, fsamp, fcent, pLevel, ArbFileName)
+function send_to_cxg(connectionID, data, fsamp, fcent, pLevel, ArbFileName)
 
 % send_to_cxg(connectionID, data, fcent, fsamp, pLevel, ArbFileName)
 %
-% connectionID - идентификатор USB соединения или IP адрес
-% data (ref2_time) - массив(в виде комплексных чисел), который будет записан
-% fsamp - частота дискретизации
-% fcent - центральная частота(несущая)
-% pLevel - power level - мощность в децибелах
-% ArbАileName - имя файла в приборе
+% connectionID - connection identificator:
+%                   USB -> 'USB0::0x0957::0x1F01::MY59100546::0::INSTR'
+%                   TCP -> '196.182.9.1'
+% data        - complex numbers array that should be written to instrument memory
+% fsamp       - sampling rate
+% fcent       - central frequency (carrier frequency)
+% pLevel      - power level (in dB)
+% ArbАileName - name of the created file
 %
-% Значения по умолчанию:
+% Default values (used if inputs are ommited):
 % fcent = 500 MHz
 % fsamp = 20 MHz
 % pLevel = -40 dB
@@ -28,7 +30,7 @@ data_size = size(data);
 assert(data_size(1) == 1, 'Convertation from colum to string failed [sendToCxg :: line 28]')
 
 if nargin < 2
-    error('На вход функции необходимо хотя бы два аргумента');
+    error('At least two arguments must be passed to the function');
 end
 
 if (nargin < 6) ArbFileName = 'Untitled'; end
@@ -63,7 +65,7 @@ switch (contains(connectionID, '::'))
         device_buffer = 10000000*8;
         set(cxg,'OutputBufferSize',(device_buffer+125));
         
-        % Открыть соединение с инструментом
+        % Open instrument connection
         fopen(cxg);
 
     case 0
