@@ -20,6 +20,13 @@ function sendToCxg(connectionID, data, fsamp, fcent, pLevel, ArbFileName)
 % id - идентификатор USB соединения (по идее тут надо еще запихнуть
 % возможность передать IP, если соединение через LAN)
 
+data_size = size(data);
+if data_size(1) ~= 1
+    data = data';
+end
+data_size = size(data);
+assert(data_size(1) == 1, 'Convertation from colum to string failed [sendToCxg :: line 28]')
+
 if nargin < 2
     error('На вход функции необходимо хотя бы два аргумента');
 end
